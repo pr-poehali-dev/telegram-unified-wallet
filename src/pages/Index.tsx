@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 import Icon from "@/components/ui/icon";
 
 const Index = () => {
@@ -34,6 +36,31 @@ const Index = () => {
 
   const dailyProgress = (dailySpent / dailyLimit) * 100;
   const monthlyProgress = (monthlySpent / monthlyLimit) * 100;
+
+  const weeklyData = [
+    { day: "Пн", amount: 320 },
+    { day: "Вт", amount: 450 },
+    { day: "Ср", amount: 280 },
+    { day: "Чт", amount: 520 },
+    { day: "Пт", amount: 380 },
+    { day: "Сб", amount: 150 },
+    { day: "Вс", amount: 220 },
+  ];
+
+  const categoryData = [
+    { category: "ChatGPT", amount: 620, color: "hsl(199, 89%, 48%)" },
+    { category: "Midjourney", amount: 900, color: "hsl(220, 15%, 25%)" },
+    { category: "Claude", amount: 465, color: "hsl(199, 89%, 60%)" },
+    { category: "Другое", amount: 335, color: "hsl(220, 10%, 45%)" },
+  ];
+
+  const monthlyTrendData = [
+    { month: "Авг", amount: 6500 },
+    { month: "Сен", amount: 7200 },
+    { month: "Окт", amount: 8100 },
+    { month: "Ноя", amount: 7800 },
+    { month: "Дек", amount: 8320 },
+  ];
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -66,12 +93,152 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="limits" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardDescription>Потрачено за неделю</CardDescription>
+              <CardTitle className="text-3xl">2,320 ₽</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-green-500">↓ 12% от прошлой недели</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardDescription>Активных подписок</CardDescription>
+              <CardTitle className="text-3xl">3</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">ChatGPT, Midjourney, Claude</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardDescription>Средний чек</CardDescription>
+              <CardTitle className="text-3xl">22.75 ₽</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-primary">102 транзакции</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="analytics" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="analytics">Аналитика</TabsTrigger>
             <TabsTrigger value="limits">Лимиты</TabsTrigger>
             <TabsTrigger value="history">История</TabsTrigger>
             <TabsTrigger value="integrations">Интеграции</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="space-y-4 animate-scale-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="TrendingUp" size={20} className="text-primary" />
+                    Расходы по дням
+                  </CardTitle>
+                  <CardDescription>Последние 7 дней</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      amount: {
+                        label: "Сумма",
+                        color: "hsl(199, 89%, 48%)",
+                      },
+                    }}
+                    className="h-[200px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weeklyData}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="day" className="text-xs" />
+                        <YAxis className="text-xs" />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="amount" fill="hsl(199, 89%, 48%)" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon name="PieChart" size={20} className="text-primary" />
+                    По категориям
+                  </CardTitle>
+                  <CardDescription>Распределение расходов</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {categoryData.map((item, index) => {
+                      const total = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+                      const percentage = ((item.amount / total) * 100).toFixed(1);
+                      return (
+                        <div key={index} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{item.category}</span>
+                            <span className="text-sm text-muted-foreground">{item.amount} ₽ ({percentage}%)</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full transition-all duration-500"
+                              style={{
+                                width: `${percentage}%`,
+                                backgroundColor: item.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon name="Activity" size={20} className="text-primary" />
+                  Тренд расходов
+                </CardTitle>
+                <CardDescription>Последние 5 месяцев</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  config={{
+                    amount: {
+                      label: "Расходы",
+                      color: "hsl(199, 89%, 48%)",
+                    },
+                  }}
+                  className="h-[250px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="hsl(199, 89%, 48%)"
+                        strokeWidth={3}
+                        dot={{ fill: "hsl(199, 89%, 48%)", r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="limits" className="space-y-4 animate-scale-in">
             <Card>
